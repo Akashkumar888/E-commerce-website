@@ -90,7 +90,8 @@ export const ShopContextProvider=({children})=>{ // direct destructuring using {
     addToCart,
     getCartCount,
     updateQuantity,
-    getCartAmount
+    getCartAmount,
+    navigate
   };
 
   return (
