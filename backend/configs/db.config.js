@@ -1,26 +1,23 @@
 
 import mongoose from "mongoose";
 
-const connectDB = async () => {
+const connectDB=async()=>{
   try {
-    mongoose.connection.on("connected", () => {
-      console.log("✅ MongoDB Connected");
+     // MongoDB connection events
+    mongoose.connection.on("connected",()=>{
+      console.log("✅ Database connected successfully.");
+    })
+    mongoose.connection.on("error",(error)=>{
+      console.log("❌ Database connection error:",error)
     });
-
-    mongoose.connection.on("error", (err) => {
-      console.log("❌ MongoDB Connection Error:", err);
-    });
-
-    mongoose.connection.on("disconnected", () => {
-      console.log("⚠️ MongoDB Disconnected");
-    });
-
-    await mongoose.connect(`${process.env.MONGODB_URI}/Forever`);
-
+    mongoose.connection.on("disconnected",()=>{
+      console.log("⚠️ Database disconnected.");
+    })
+    await mongoose.connect(`${process.env.MONGODB_URI}/QuickChat`);
   } catch (error) {
-    console.log("❌ DB connection failed");
+    console.log("Database connection failed.");
     process.exit(1);
   }
-};
+}
 
 export default connectDB;
