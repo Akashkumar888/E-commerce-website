@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import helmet from 'helmet'
 import userRouter from './routes/user.route.js';
+import productRouter from './routes/product.route.js';
 const app=express();
 
 // middleware 
@@ -31,9 +32,10 @@ app.use(helmet({
 // test api 
 app.get("/",(req,res)=>{
   res.send("Server is working.")
-});
+});                     
 
 // follow rest api structure
 app.use("/api/user",userRouter);
+app.use("/api/product",productRouter);
 
 export default app;

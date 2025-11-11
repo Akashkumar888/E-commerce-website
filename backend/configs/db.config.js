@@ -13,11 +13,11 @@ const connectDB=async()=>{
     mongoose.connection.on("disconnected",()=>{
       console.log("⚠️ Database disconnected.");
     })
-    await mongoose.connect(`${process.env.MONGODB_URI}/QuickChat`);
+    await mongoose.connect(`${process.env.MONGODB_URI}/E-commerce`);
   } catch (error) {
     console.log("Database connection failed.");
     process.exit(1);
   }
 }
 
-export default connectDB;
+export default connectDB;             

@@ -1,7 +1,7 @@
 
 import mongoose from "mongoose";
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
+
 
 const userSchema=new mongoose.Schema({
 //  _id by default store by mongoDB
@@ -13,45 +13,8 @@ password:{
   minlength:8,
   select:false// For sensitive data, always set select: false for password and other sensitive fields, which you are already doing.
 },
-avatar:{type:String,default:""},
-mobile:{type:Number,default:null},
-refresh_token:{type:String,default:""},
-verify_email:{type:Boolean,default:false},
-last_login_date:{type:Date,default:null},
-// refresh_token_expiry: { type: Date, default: null },  // ✅ added standard practice
-status:{type:String,enum:["Active","Inactive","Suspended"],default:'Active'},
-address_details:[
-  {
-    type:mongoose.Schema.ObjectId,
-    ref:"Address"
-  }
-],
-shopping_cart:[
-  {
-    type:mongoose.Schema.ObjectId,
-    ref:"CartProduct"
-  }
-],
-orderHistory:[
-  {
-    type:mongoose.Schema.ObjectId,
-    ref:"Order"
-  }
-],
-forgot_password_otp:{
-  type:String,
-  default:null,
-},
-forgot_password_expiry:{
-  type:Date,
-  default:null,
-},
-role:{
-  type:String,
-  enum:["ADMIN","USER"],
-  default:"USER"
-},
-},{timestamps:true});
+cartData:{type:Object,default:{}}
+},{timestamps:true,minimize:false});
 
 
 // Hash password before saving
@@ -84,12 +47,6 @@ userSchema.pre("save", async function (next) {
     return await bcrypt.compare(enteredPassword, this.password);
   };
   
-  // Generate JWT token (instance method)
-  userSchema.methods.generateAuthToken = function () {
-    return jwt.sign({ _id: this._id }, process.env.JWT_SECRET, {
-      // expiresIn: "30d", // expiry is best practice
-    });
-  };
   
 
   const userModel=mongoose.models.User || mongoose.model("User",userSchema);
