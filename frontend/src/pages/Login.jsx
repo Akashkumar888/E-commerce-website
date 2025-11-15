@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
+import api from '../api/axios';
+import { toast } from 'react-toastify';
+import ShopContext from '../context/ShopContext';
 
 const Login = () => {
 
@@ -6,12 +9,38 @@ const Login = () => {
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [currentState,setCurrentState]=useState("Sign Up");
+  const {token,setToken,navigate}=useContext(ShopContext);
 
-  const onSubmitHandler=async(event)=>{
-   event.preventDefault();
+  const onSubmitHandler = async (e) => {
+  e.preventDefault();
 
+  try {
+    const endpoint =
+      currentState === "Sign Up" ? "register" : "login";
+
+    const payload =
+      currentState === "Sign Up"
+        ? { name, email, password }
+        : { email, password };
+
+    const { data } = await api.post(`/api/user/${endpoint}`, payload);
+
+    if (data.success) {
+      toast.success(data.message);
+
+      setToken(data.token);
+      localStorage.setItem("token", data.token);  // 🔥 persist token
+    } 
+    else {
+      toast.error(data.message);
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error(error.response?.data?.message || error.message);
   }
-  
+};
+
+
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-14 gap-4 text-gray-800'>
       <div className="inline-flex items-center gap-2 mb-2 mt-10">

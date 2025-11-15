@@ -1,31 +1,25 @@
 import dotenv from 'dotenv'
 dotenv.config();
 import express from 'express'
-import cors from 'cors'
+import cors from "cors";
 import cookieParser from 'cookie-parser';
-import morgan from 'morgan';
-import helmet from 'helmet'
 import userRouter from './routes/user.route.js';
 import productRouter from './routes/product.route.js';
 const app=express();
 
 // middleware 
+// ✅ Step 1: Add simple working CORS
 app.use(cors({
-  credentials:true,
-  origin:process.env.FRONTEND_URL
+  origin: [
+    process.env.FRONTEND_URL,   
+    process.env.ADMIN_URL       
+  ],
+  credentials: true, // allows cookies and Authorization headers
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
-app.use(morgan("combined"));
-// For development
-// app.use(morgan("dev"));
-// OR for production logs:
-// app.use(morgan("combined"));
-
-app.use(helmet({
-  crossOriginResourcePolicy:false
-}))
 
 
 

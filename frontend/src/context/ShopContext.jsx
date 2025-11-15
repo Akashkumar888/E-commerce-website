@@ -1,8 +1,8 @@
 
 import { createContext, useEffect, useState } from "react";
-import { products } from "../assets/assets";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios";
 
 const ShopContext=createContext();
 
@@ -10,10 +10,13 @@ export const ShopContextProvider=({children})=>{ // direct destructuring using {
 
   const currencySymbol="$";
   const delivery_fee=10;
+  const [products,setProducts]=useState([]);
   const [search,setSearch]=useState("");
   const [showSearch,setShowSearch]=useState(false);
   const [cartItems,setCartItems]=useState({});
   const navigate=useNavigate();
+  const [token, setToken] = useState(() => localStorage.getItem("token") || "");
+
 
   const addToCart=async(itemId,size)=>{
   
@@ -78,8 +81,27 @@ export const ShopContextProvider=({children})=>{ // direct destructuring using {
     return totalAmount;
   }
 
+  const getProductsData=async()=>{
+    try {
+      const {data}=await api.get(`/api/product/list`);
+      if(data.success){
+        setProducts(data.products);
+      }
+      else{
+        toast.error(data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
+  }
+  useEffect(()=>{
+  getProductsData();
+  },[])
+
   const value={
     products,
+    setProducts,
     currencySymbol,
     delivery_fee,
     search,
@@ -91,7 +113,9 @@ export const ShopContextProvider=({children})=>{ // direct destructuring using {
     getCartCount,
     updateQuantity,
     getCartAmount,
-    navigate
+    navigate,
+    token,
+    setToken
   };
 
   return (

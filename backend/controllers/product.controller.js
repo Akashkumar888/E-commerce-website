@@ -2,66 +2,69 @@ import productModel from "../models/product.model.js";
 import uploadImageCloudinary from "../utils/uploadImageCloudinary.util.js";
 
 // function for add product 
-export const addProduct=async(request,response)=>{
+export const addProduct = async (req, res) => {
   try {
-    const {name,description,price,category,subCategory,sizes,bestSeller}=request.body;
+    const { name, description, price, category, subCategory, sizes, bestseller } = req.body;
 
-    // ✅ Access uploaded files correctly
-    const image1 = request.files.image1?.[0];
-    const image2 = request.files.image2?.[0];
-    const image3 = request.files.image3?.[0];
-    const image4 = request.files.image4?.[0];
-    // const files = req.files; // ✅ array of files
+    // Get uploaded images
+    const image1 = req.files?.image1?.[0];
+    const image2 = req.files?.image2?.[0];
+    const image3 = req.files?.image3?.[0];
+    const image4 = req.files?.image4?.[0];
 
-    // ✅ Upload images to Cloudinary
-    // ✅ Filter available images
     const images = [image1, image2, image3, image4].filter(Boolean);
 
     if (images.length === 0) {
-      return response.status(400).json({ success: false, message: "No images found" });
+      return res.status(400).json({ success: false, message: "No images uploaded" });
     }
 
-
-    // ✅ Upload each image separately
+    // Upload to Cloudinary
     const uploadedImages = [];
-
     for (const img of images) {
       const uploaded = await uploadImageCloudinary(img);
-      uploadedImages.push(uploaded.secure_url);  // save URL
+      uploadedImages.push(uploaded.secure_url); 
     }
 
-    // ✅ Safe sizes parsing
+    // Parse sizes array
     let parsedSizes = [];
     if (sizes) {
-      try { parsedSizes = JSON.parse(sizes); }
-      catch { parsedSizes = sizes.split(","); }
+      try {
+        parsedSizes = JSON.parse(sizes);
+      } catch {
+        parsedSizes = sizes.split(",");
+      }
     }
 
-    const productData={
+    // Store final product data
+    const productData = {
       name,
       description,
+      price: Number(price),
       category,
-      price:Number(price),
       subCategory,
-      bestSeller:bestSeller==='true'? true:false,
-      sizes:parsedSizes,
-      image:uploadedImages,
-      date:Date.now()
+      bestseller: bestseller === "true",
+      sizes: parsedSizes,
+      image: uploadedImages,
+      date: Date.now(),
     };
-    const product= await productModel.create(productData);
-    
-    return response.json({
+
+    const product = await productModel.create(productData);
+
+    res.json({
       success: true,
-      message: "Product Added",
+      message: "Product Added Successfully",
       product
     });
-    
-    
+
   } catch (error) {
-    console.log(error);
-    response.status(500).json({success:false,message:error.message || "Server error",error:true});
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
-}
+};
+
 
 
 // function for list product 
