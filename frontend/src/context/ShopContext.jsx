@@ -1,105 +1,116 @@
-
 import { createContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
-const ShopContext=createContext();
+const ShopContext = createContext();
 
-export const ShopContextProvider=({children})=>{ // direct destructuring using {}
+export const ShopContextProvider = ({ children }) => {
 
-  const currencySymbol="$";
-  const delivery_fee=10;
-  const [products,setProducts]=useState([]);
-  const [search,setSearch]=useState("");
-  const [showSearch,setShowSearch]=useState(false);
-  const [cartItems,setCartItems]=useState({});
-  const navigate=useNavigate();
+  const currencySymbol = "$";
+  const delivery_fee = 10;
+
+  const [products, setProducts] = useState([]);
+  const [search, setSearch] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
+  const [cartItems, setCartItems] = useState({});
   const [token, setToken] = useState(() => localStorage.getItem("token") || "");
 
+  const navigate = useNavigate();
 
-  const addToCart=async(itemId,size)=>{
-  
-    if(!size){
-      toast.error("Select Product Size");
-      return;
-    }
-    let cartData=structuredClone(cartItems); // copy of the cartItems
-    if(cartData[itemId]){
-      if(cartData[itemId][size]){
-        cartData[itemId][size]+=1;
-      }
-      else{
-        cartData[itemId][size]=1;
-      }
-    }
-    else{
-      cartData[itemId]={};
-      cartData[itemId][size]=1;
-    }
+  /* ---------- ADD TO CART ---------- */
+  const addToCart = async (itemId, size) => {
+    if (!size) return toast.error("Select Product Size");
+
+    let cartData = structuredClone(cartItems);
+    cartData[itemId] = cartData[itemId] || {};
+    cartData[itemId][size] = (cartData[itemId][size] || 0) + 1;
     setCartItems(cartData);
-  }
- 
-  const updateQuantity=async(itemId,size,quantity)=>{
-    let cartData=structuredClone(cartItems);
-    cartData[itemId][size]=quantity;
-    setCartItems(cartData);
-  }
 
-
-  const getCartCount=()=>{
-    let totalCount=0;
-    for(const items in cartItems){
-     for(const item in cartItems[items]){
+    if (token) {
       try {
-        if(cartItems[items][item]>0){
-          totalCount += cartItems[items][item];
-        }
+        await api.post("/api/cart/add", { itemId, size });
       } catch (error) {
-        toast.error(error.message);
-      }
-     }
-    }
-    return totalCount;
-  }
-
-
-  const getCartAmount=()=>{
-    let totalAmount=0;
-    for( let items in cartItems){
-      let itemInfo=products.find((product)=> product._id ===items)
-      for(const item in cartItems[items]){
-        try {
-          if(cartItems[items][item]>0){
-          totalAmount+=itemInfo.price * cartItems[items][item];
-          }
-        } catch (error) {
-          toast.error(error.message);
-        }
+        console.log(error);
+        toast.error("Failed to sync cart");
       }
     }
-    return totalAmount;
-  }
+  };
 
-  const getProductsData=async()=>{
+  /* ---------- UPDATE CART QUANTITY ---------- */
+  const updateQuantity = async (itemId, size, quantity) => {
+    let cartData = structuredClone(cartItems);
+
+    if (quantity <= 0) delete cartData[itemId][size];
+    else cartData[itemId][size] = quantity;
+
+    setCartItems(cartData);
+
+    if (token) {
+      try {
+        await api.put("/api/cart/update", { itemId, size, quantity });
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to update cart");
+      }
+    }
+  };
+
+  /* ---------- CART COUNT ---------- */
+  const getCartCount = () =>
+    Object.values(cartItems)
+      .flatMap((sizes) => Object.values(sizes))
+      .reduce((sum, qty) => sum + qty, 0);
+
+  /* ---------- CART TOTAL ---------- */
+  const getCartAmount = () => {
+    let total = 0;
+    for (let id in cartItems) {
+      const product = products.find((p) => p._id === id);
+      if (!product) continue;
+
+      for (let qty of Object.values(cartItems[id])) {
+        total += product.price * qty;
+      }
+    }
+    return total;
+  };
+
+  /* ---------- FETCH PRODUCTS ---------- */
+  const getProductsData = async () => {
     try {
-      const {data}=await api.get(`/api/product/list`);
-      if(data.success){
-        setProducts(data.products);
-      }
-      else{
-        toast.error(data.message);
-      }
+      const { data } = await api.get("/api/product/list");
+      if (data.success) setProducts(data.products);
+      else toast.error(data.message);
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error("Product fetch failed");
     }
-  }
-  useEffect(()=>{
-  getProductsData();
-  },[])
+  };
 
-  const value={
+  /* ---------- LOAD USER CART ---------- */
+  const getUserCart = async () => {
+    if (!token) return;
+
+    try {
+      const { data } = await api.get("/api/cart/get");
+      if (data.success) setCartItems(data.cartData);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  /* ---------- INITIAL LOAD ---------- */
+  useEffect(() => {
+    getProductsData();
+  }, []);
+
+  useEffect(() => {
+    getUserCart();
+  }, [token]);
+
+  /* ---------- PROVIDER VALUE ---------- */
+  const value = {
     products,
     setProducts,
     currencySymbol,
@@ -110,19 +121,20 @@ export const ShopContextProvider=({children})=>{ // direct destructuring using {
     setShowSearch,
     cartItems,
     addToCart,
-    getCartCount,
     updateQuantity,
+    getCartCount,
     getCartAmount,
     navigate,
     token,
-    setToken
+    setToken,
+    setCartItems,
   };
 
   return (
     <ShopContext.Provider value={value}>
-   {children}
-  </ShopContext.Provider>
-  )
-}
+      {children}
+      </ShopContext.Provider>
+  );
+};
 
 export default ShopContext;

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import api from '../api/axios';
 import { toast } from 'react-toastify';
 import ShopContext from '../context/ShopContext';
@@ -8,7 +8,7 @@ const Login = () => {
   const [name,setName]=useState("");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
-  const [currentState,setCurrentState]=useState("Sign Up");
+  const [currentState,setCurrentState]=useState("Login");
   const {token,setToken,navigate}=useContext(ShopContext);
 
   const onSubmitHandler = async (e) => {
@@ -27,7 +27,6 @@ const Login = () => {
 
     if (data.success) {
       toast.success(data.message);
-
       setToken(data.token);
       localStorage.setItem("token", data.token);  // 🔥 persist token
     } 
@@ -39,6 +38,13 @@ const Login = () => {
     toast.error(error.response?.data?.message || error.message);
   }
 };
+
+
+useEffect(()=>{
+if(token){
+  navigate("/");
+}
+},[token]);
 
 
   return (

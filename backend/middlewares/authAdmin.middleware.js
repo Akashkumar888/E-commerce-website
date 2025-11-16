@@ -1,7 +1,7 @@
 
 import jwt from "jsonwebtoken";
 
-export const adminAuth = (request, response, next) => {
+export const authAdmin = (request, response, next) => {
   try {
     // ✅ 1. Extract token from cookie or Authorization header
     const token =

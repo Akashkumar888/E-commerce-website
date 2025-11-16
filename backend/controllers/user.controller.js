@@ -97,3 +97,13 @@ export const adminLogin=async(request,response)=>{
     response.status(500).json({success:false,message:error.message || "Server error",error:true});
   }
 }                          
+
+// api to get the user data 
+export const getProfile=async(req,res)=>{
+  try {
+    res.status(201).json({success:true,user:req.user});
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({success:false,message:error.message});
+  }
+}
