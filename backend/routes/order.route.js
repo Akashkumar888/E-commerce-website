@@ -3,10 +3,11 @@ import {
   placeOrder,
   placeOrderStripe,
   placeOrderRazorpay,
-  verifyOrder,
   allOrders,
   userOrders,
   updateStatus,
+  verifyStripe,
+  verifyRazorpay,
 } from "../controllers/order.controller.js";
 
 import { authUser } from "../middlewares/authUser.middleware.js";
@@ -25,8 +26,11 @@ orderRouter.post("/stripe", authUser, placeOrderStripe);
 // RAZORPAY Order
 orderRouter.post("/razorpay", authUser, placeOrderRazorpay);
 
-// Verify Razorpay Online Payment
-orderRouter.post("/verify", authUser, verifyOrder);
+// Verify Stripe Online Payment
+orderRouter.post("/verifyStripe", authUser, verifyStripe);
+
+// Verify razorpay Online Payment
+orderRouter.post("/verifyRazorpay", authUser, verifyRazorpay);
 
 // Get logged-in user orders
 orderRouter.get("/user-orders", authUser, userOrders);

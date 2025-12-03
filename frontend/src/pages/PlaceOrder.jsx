@@ -31,27 +31,56 @@ const PlaceOrder = () => {
   }
 
 
+  const initializeRazorpay=(order)=>{
+      const options={
+        key:import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount:order.amount,
+        currency:order.currency,
+        name:'Order Payment',
+        description:'Order Payment',
+        order_id:order.id,
+        receipt:order.receipt,
+        handler:async(response)=>{
+          try {
+            const {data}=await api.post(`/api/order/verifyRazorpay`,response);
+            if(data.success){
+              navigate('/orders');
+              setCartItems({});
+            }
+          } catch (error) {
+            console.log(error);
+            toast.error(error.message);
+          }
+
+        }
+      };
+      const rzp=new window.Razorpay(options);
+      rzp.open();
+  }
+
   const onSubmitHandler=async(event)=>{
     event.preventDefault();
      try {
-       let orderItems=[];
-       for(const items in cartItems){
-        for(const item in cartItems[items]){
-          if(cartItems[items][item]>0){
-            const itemInfo=structuredClone(products.find(product => product._id===item));
-            if(itemInfo){
-              itemInfo.size=item;
-              itemInfo.quantity=cartItems[items][item];
-              orderItems.push(itemInfo);
-            }
-          }
+       let orderItems = [];
+
+      for (const productId in cartItems) {
+        const product = products.find(p => p._id === productId);
+
+        for (const size in cartItems[productId]) {
+          orderItems.push({
+            productId,
+            size,
+            quantity: cartItems[productId][size],
+            name: product.name,  // ✔ FIXED
+            price: product.price // ✔ FIXED
+          });
         }
-       }
+      }
+
        let orderData={
         address:formData,
         items:orderItems,
-        amount:getCartAmount() + delivery_fee,
-        currencySymbol
+        amount:getCartAmount() + delivery_fee
        };
        let url='/api/order'
        if(method==='cod'){
@@ -67,8 +96,7 @@ const PlaceOrder = () => {
        else if(method==='razorpay'){
          const {data}=await api.post(`${url}/razorpay`,orderData);
         if(data.success){
-         setCartItems({});
-         navigate("/orders");
+          initializeRazorpay(data.order);
         }
         else{
           toast.error(data.message);
@@ -77,8 +105,7 @@ const PlaceOrder = () => {
        else if(method==='stripe'){
         const {data}=await api.post(`${url}/stripe`,orderData);
         if(data.success){
-         setCartItems({});
-         navigate("/orders");
+          window.location.replace(data.session_url);   // redirect user to Stripe checkout
         }
         else{
           toast.error(data.message);
